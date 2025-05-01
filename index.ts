@@ -24,9 +24,9 @@ server.tool('get_springer_search_results',
     
     fs.writeFileSync('C:\\Users\\Adi\\OneDrive\\Code\\Playlab\\Springer-API-MCP-Integration\\searchResults.json', JSON.stringify(searchResults, null, 2) ?? '');
 
-    if (!searchResults) {
+    if (!searchResults || typeof searchResults !== 'object') {
       return {
-        content: [{ type: 'text', text: 'No results found' }]
+        content: [{ type: 'text', text: searchResults ?? 'No results found' }]
       }
     }
 

@@ -19,23 +19,20 @@ async function getSearchResults(query: string, articlesPerPage: number = 20) {
         const response = await fetch(url);
 
         if (!response.ok) {
-            Error('Error fetching article data: ' + response.statusText);
-            return;
+            return Error('Error fetching article data: ' + response.statusText);;;
         }
 
         const data = await response.text();
         
         if (!parseJSON(data)) {
-            Error('Invalid JSON response');
-            return;
+            return Error('Invalid JSON response');
         }
         
         const parsedData = JSON.parse(data);
         Info('Parsed data structure: ' + JSON.stringify(Object.keys(parsedData)));
         
         if (!parsedData?.records) {
-            Error('No records found in response');
-            return;
+            return Error('No records found in response');
         }
         
         const records = parsedData.records;
@@ -44,8 +41,7 @@ async function getSearchResults(query: string, articlesPerPage: number = 20) {
 
         return records;
     } catch (error) {
-        Error('Unexpected error in getSearchResults: ' + String(error));
-        return;
+        return false;
     }
 }
 
@@ -62,8 +58,7 @@ async function getArticleData(id: string) {
         const response = await fetch(url);
 
         if (!response.ok) {
-            Error('Error fetching article data: ' + response.statusText);
-            return;
+            return Error('Error fetching article data: ' + response.statusText);
         }
 
         const xml = await response.text();
@@ -80,16 +75,14 @@ async function getArticleData(id: string) {
         Info('Converted XML to JSON: ' + myJson.substring(0, 200) + '...');
 
         if (!parseJSON(myJson)) {
-            Error('Invalid JSON after XML conversion');
-            return;
+            return Error('Invalid JSON after XML conversion');
         }
 
         const parsedJson = JSON.parse(myJson);
         Info('Parsed JSON structure: ' + JSON.stringify(Object.keys(parsedJson)));
 
         if (!parsedJson?.response?.records) {
-            Error('No records found in response');
-            return;
+            return Error('No records found in response');
         }
 
         const records = parsedJson.response.records;
@@ -97,8 +90,7 @@ async function getArticleData(id: string) {
 
         return records;
     } catch (error) {
-        Error('Unexpected error in getArticleData: ' + String(error));
-        return;
+        return false;
     }
 }
 
@@ -107,7 +99,6 @@ function parseJSON(str: string): boolean {
         JSON.parse(str);
         return true;
     } catch (error) {
-        Error('JSON parse error: ' + String(error));
         return false;
     }
 }
