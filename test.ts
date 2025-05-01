@@ -2,9 +2,14 @@ import { Sucess, Info, Warning, Alert, Error } from './ConsoleManagement'
 import express, { RequestHandler } from 'express';
 import { getSearchResults, getArticleData } from './springer';
 import 'dotenv/config';
+import { encode } from 'punycode';
 
 const app = express();
 app.use(express.json());
+
+app.get('/', (req, res) => {
+    res.redirect(`/search?q=${encodeURIComponent('machine learning')}`);
+})
 
 // Search endpoint
 app.get('/search', (async (req, res) => {

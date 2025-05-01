@@ -1,4 +1,6 @@
-import 'dotenv/config';
+// import 'dotenv/config';
+
+import fs from 'fs';
 
 import { McpServer, ResourceTemplate } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { StdioServerTransport } from '@modelcontextprotocol/sdk/server/stdio.js';
@@ -19,6 +21,15 @@ server.tool('get_springer_search_results',
   { query: z.string(), articles_per_page: z.number().optional() },
   async ({ query, articles_per_page }) => {
     const searchResults = await getSearchResults(query, articles_per_page);
+    
+    fs.writeFileSync('C:\\Users\\Adi\\OneDrive\\Code\\Playlab\\Springer-API-MCP-Integration\\searchResults.json', JSON.stringify(searchResults, null, 2) ?? '');
+
+    if (!searchResults) {
+      return {
+        content: [{ type: 'text', text: 'No results found' }]
+      }
+    }
+
     return {
       content: [{ type: 'text', text: JSON.stringify(searchResults) }]
     }
@@ -30,8 +41,17 @@ server.tool('get_springer_article_data',
   { id: z.string() },
   async ({ id }) => {
     const articleData = await getArticleData(id);
+    
+    fs.writeFileSync('C:\\Users\\Adi\\OneDrive\\Code\\Playlab\\Springer-API-MCP-Integration\\articleData.json', JSON.stringify(articleData, null, 2) ?? '');
+    
+    if (!articleData) {
+      return {
+        content: [{ type: 'text', text: 'No article data found' }]
+      }
+    }
+
     return {
-      content: articleData
+      content: [{ type: 'text', text: JSON.stringify(articleData) }]
     }
   }
 );

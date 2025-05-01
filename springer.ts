@@ -1,9 +1,10 @@
-import 'dotenv/config';
+// import 'dotenv/config';
+import fs from 'fs';
 
 import { Sucess, Info, Warning, Alert, Error } from './ConsoleManagement.js'
 
 import { xml2json } from 'xml-js';
-
+import { parse } from 'path';
 
 /**
  * Fetches search results from Springer API
@@ -12,28 +13,40 @@ import { xml2json } from 'xml-js';
  * @returns Array of search results or error message
  */
 async function getSearchResults(query: string, articlesPerPage: number = 20) {
-    const url = `https://api.springernature.com/openaccess/json?api_key=${process.env.SPRINGER_API_KEY}&callback=&s=1&p=${articlesPerPage}&q=${encodeURIComponent(query)}`
+    const url = `https://api.springernature.com/openaccess/json?api_key=${process.env.SPRINGER_API_KEY || ''}&callback=&s=1&p=${articlesPerPage}&q=${encodeURIComponent(query)}`
 
-    const response = await fetch(url);
+    try {
+        const response = await fetch(url);
 
-    if (!response.ok) {
-        return Error('Error fetching article data: ' + response.statusText);
+        if (!response.ok) {
+            Error('Error fetching article data: ' + response.statusText);
+            return;
+        }
+
+        const data = await response.text();
+        
+        if (!parseJSON(data)) {
+            Error('Invalid JSON response');
+            return;
+        }
+        
+        const parsedData = JSON.parse(data);
+        Info('Parsed data structure: ' + JSON.stringify(Object.keys(parsedData)));
+        
+        if (!parsedData?.records) {
+            Error('No records found in response');
+            return;
+        }
+        
+        const records = parsedData.records;
+        Info('Number of records found: ' + records.length);
+        fs.writeFileSync('C:\\Users\\Adi\\OneDrive\\Code\\Playlab\\Springer-API-MCP-Integration\\searchResults.json', JSON.stringify(records, null, 2) ?? '');
+
+        return records;
+    } catch (error) {
+        Error('Unexpected error in getSearchResults: ' + String(error));
+        return;
     }
-    let data: string | { records: any[] } = await response.text();
-
-    if (parseJSON(data)) {
-        data = JSON.parse(data) as { records: any[] };
-    }
-    else return data
-
-
-    const records = data.records;
-
-    if (!records) {
-        return Error('No results found');
-    }
-
-    return records;
 }
 
 /**
@@ -45,43 +58,56 @@ async function getSearchResults(query: string, articlesPerPage: number = 20) {
 async function getArticleData(id: string) {
     const url = `https://api.springernature.com/openaccess/jats?api_key=${process.env.SPRINGER_API_KEY}&callback=&s=1&q=${encodeURIComponent(id)}`
 
+    try {
+        const response = await fetch(url);
 
-    const response = await fetch(url);
+        if (!response.ok) {
+            Error('Error fetching article data: ' + response.statusText);
+            return;
+        }
 
-    const xml = await response.text();
+        const xml = await response.text();
+        Info('Raw XML response: ' + xml.substring(0, 200) + '...');
 
-    // Convert XML to JSON
-    let myJson: any = xml2json(xml, {
-        compact: true,
-        spaces: 0,
-        ignoreComment: true,
-        ignoreDeclaration: true
-    });
+        // Convert XML to JSON
+        const myJson = xml2json(xml, {
+            compact: true,
+            spaces: 0,
+            ignoreComment: true,
+            ignoreDeclaration: true
+        });
 
-    if (parseJSON(myJson)) {
-        myJson = JSON.parse(myJson);
+        Info('Converted XML to JSON: ' + myJson.substring(0, 200) + '...');
+
+        if (!parseJSON(myJson)) {
+            Error('Invalid JSON after XML conversion');
+            return;
+        }
+
+        const parsedJson = JSON.parse(myJson);
+        Info('Parsed JSON structure: ' + JSON.stringify(Object.keys(parsedJson)));
+
+        if (!parsedJson?.response?.records) {
+            Error('No records found in response');
+            return;
+        }
+
+        const records = parsedJson.response.records;
+        Info('Number of records found: ' + records.length);
+
+        return records;
+    } catch (error) {
+        Error('Unexpected error in getArticleData: ' + String(error));
+        return;
     }
-    else return myJson
-
-    const records = myJson?.response?.records
-    // Info(records, 'dir')
-    
-    if (!response.ok) {
-        return Error('Error fetching article data');
-    }
-    
-    if (!records) {
-        return Error('Article not found');
-    }
-
-    return records;
 }
 
 function parseJSON(str: string): boolean {
     try {
         JSON.parse(str);
         return true;
-    } catch {
+    } catch (error) {
+        Error('JSON parse error: ' + String(error));
         return false;
     }
 }

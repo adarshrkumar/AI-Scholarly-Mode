@@ -1,15 +1,15 @@
 {
   "type": "module",
-  "name": "demo-mcp-server",
+  "name": "springer-mcp-server",
   "version": "1.0.0",
-  "description": "A demo MCP server for Claude Desktop",
+  "description": "A MCP server for Springer",
   "main": "index.ts",
   "scripts": {
-    "start": "node --import ./start.js index.ts",
+    "start": "node ./dist/index.js",
     "dev": "npx tsx --watch ./test.ts",
     "build": "tsc"
   },
-  "author": "adarshrkumar",
+  "author": "adarshrkumar for Playlab.ai",
   "license": "ISC",
   "dependencies": {
     "@modelcontextprotocol/sdk": "^1.10.2",
