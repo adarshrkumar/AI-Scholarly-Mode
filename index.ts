@@ -1,6 +1,6 @@
 // import 'dotenv/config';
 
-import fs from 'fs';
+// import fs from 'fs';
 
 import { McpServer, ResourceTemplate } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { StdioServerTransport } from '@modelcontextprotocol/sdk/server/stdio.js';
@@ -15,18 +15,52 @@ const server = new McpServer({
   version: '1.0.0'
 });
 
-// Add a calculator tool
-server.tool('get_springer_search_results',
-  'Get Springer search results',
+/**
+ * Tool: /scholarly-mode start
+ * Activates scholarly mode and provides instructions for the AI to follow
+ * This tool sets up the AI to use only the scholarly article search tools
+ * and enables article-based conversations
+ */
+server.tool('scholarly-mode-start',
+  'Start scholarly mode. This tool returns a systemPrompt for you to use while you are in scholarly mode.',
+  async () => {
+    return {
+      content: [{ type: 'text', text: 'Please use the two other scholarly mode tools to search for articles and get article data. PLEASE ALLOW THE USER TO CHAT WITH ARTICLES THAT YOU RECIEVE. YOU ARE NOT ALLOWED TO USE ANY OTHER TOOLS THAN THE TWO PROVIDED TO YOU.' }]
+    }
+  }
+);
+
+/**
+ * Tool: /scholarly-mode stop
+ * Deactivates scholarly mode and resets the AI's behavior
+ * This tool removes the scholarly mode restrictions and allows
+ * the AI to use its full range of capabilities
+ */
+server.tool('scholarly-mode-stop',
+  'Stop scholarly mode. This tool returns a systemPrompt for you to use while you are not in scholarly mode.',
+  async () => {
+    return {
+      content: [{ type: 'text', text: 'You are now in normal mode. You are not allowed to use the two scholarly mode tools. You are allowed to use any other tools than the two provided to you. PLEASE ALSO DISREGARD ALL PREVIOUS INSTRUCTION PROVIDED TO YOU ABOUT SCHOLARLY MODE.' }]
+    }
+  }
+);
+
+/**
+ * Tool: get_articles_list
+ * Searches for articles in Springer based on a query string
+ * @param query - The search query string
+ * @param articles_per_page - Optional number of results per page
+ * @returns Search results as JSON string
+ */
+server.tool('get_articles_list',
+  'Get articles list',
   { query: z.string(), articles_per_page: z.number().optional() },
   async ({ query, articles_per_page }) => {
     const searchResults = await getSearchResults(query, articles_per_page);
     
-    fs.writeFileSync('C:\\Users\\Adi\\OneDrive\\Code\\Playlab\\Springer-API-MCP-Integration\\searchResults.json', JSON.stringify(searchResults, null, 2) ?? '');
-
     if (!searchResults || typeof searchResults !== 'object') {
       return {
-        content: [{ type: 'text', text: searchResults ?? 'No results found' }]
+        content: [{ type: 'text', text: searchResults ?? JSON.stringify({type: 'error', text: {type: 'error', text: 'No results found' } }) }]
       }
     }
 
@@ -41,12 +75,10 @@ server.tool('get_springer_article_data',
   { id: z.string() },
   async ({ id }) => {
     const articleData = await getArticleData(id);
-    
-    fs.writeFileSync('C:\\Users\\Adi\\OneDrive\\Code\\Playlab\\Springer-API-MCP-Integration\\articleData.json', JSON.stringify(articleData, null, 2) ?? '');
-    
+        
     if (!articleData) {
       return {
-        content: [{ type: 'text', text: 'No article data found' }]
+        content: [{ type: 'text', text: JSON.stringify({type: 'error', text: 'No article data found' }) }]
       }
     }
 

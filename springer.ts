@@ -5,6 +5,7 @@ import { Sucess, Info, Warning, Alert, Error } from './ConsoleManagement.js'
 
 import { xml2json } from 'xml-js';
 import { parse } from 'path';
+import { SPRINGER_API_KEY } from './env.js';
 
 /**
  * Fetches search results from Springer API
@@ -13,31 +14,31 @@ import { parse } from 'path';
  * @returns Array of search results or error message
  */
 async function getSearchResults(query: string, articlesPerPage: number = 20) {
-    const url = `https://api.springernature.com/openaccess/json?api_key=${process.env.SPRINGER_API_KEY || ''}&callback=&s=1&p=${articlesPerPage}&q=${encodeURIComponent(query)}`
+    const url = `https://api.springernature.com/openaccess/json?api_key=${process.env.SPRINGER_API_KEY || SPRINGER_API_KEY}&callback=&s=1&p=${articlesPerPage}&q=${encodeURIComponent(query)}`
 
     try {
         const response = await fetch(url);
 
         if (!response.ok) {
-            return Error('Error fetching article data: ' + response.statusText);;;
+            return 'Error fetching article data: ' + response.statusText;
         }
 
         const data = await response.text();
         
         if (!parseJSON(data)) {
-            return Error('Invalid JSON response');
+            return 'Invalid JSON response';
         }
         
+        // Error('Data: ' + data);
         const parsedData = JSON.parse(data);
-        Info('Parsed data structure: ' + JSON.stringify(Object.keys(parsedData)));
+        // Info('Parsed data structure: ' + JSON.stringify(Object.keys(parsedData)));
         
         if (!parsedData?.records) {
-            return Error('No records found in response');
+            return 'No records found in response';
         }
         
         const records = parsedData.records;
-        Info('Number of records found: ' + records.length);
-        fs.writeFileSync('C:\\Users\\Adi\\OneDrive\\Code\\Playlab\\Springer-API-MCP-Integration\\searchResults.json', JSON.stringify(records, null, 2) ?? '');
+        // Info('Number of records found: ' + records.length);
 
         return records;
     } catch (error) {
@@ -52,17 +53,17 @@ async function getSearchResults(query: string, articlesPerPage: number = 20) {
  * @returns Article data with content or error message
  */
 async function getArticleData(id: string) {
-    const url = `https://api.springernature.com/openaccess/jats?api_key=${process.env.SPRINGER_API_KEY}&callback=&s=1&q=${encodeURIComponent(id)}`
+    const url = `https://api.springernature.com/openaccess/jats?api_key=${process.env.SPRINGER_API_KEY || SPRINGER_API_KEY}&callback=&s=1&q=${encodeURIComponent(id)}`
 
     try {
         const response = await fetch(url);
 
         if (!response.ok) {
-            return Error('Error fetching article data: ' + response.statusText);
+            return 'Error fetching article data: ' + response.statusText;
         }
 
         const xml = await response.text();
-        Info('Raw XML response: ' + xml.substring(0, 200) + '...');
+        // Info('Raw XML response: ' + xml.substring(0, 200) + '...');
 
         // Convert XML to JSON
         const myJson = xml2json(xml, {
@@ -72,21 +73,22 @@ async function getArticleData(id: string) {
             ignoreDeclaration: true
         });
 
-        Info('Converted XML to JSON: ' + myJson.substring(0, 200) + '...');
+        // Info('Converted XML to JSON: ' + myJson.substring(0, 200) + '...');
 
         if (!parseJSON(myJson)) {
-            return Error('Invalid JSON after XML conversion');
+            return 'Invalid JSON after XML conversion';
         }
 
+        // Error('My JSON: ' + myJson);
         const parsedJson = JSON.parse(myJson);
-        Info('Parsed JSON structure: ' + JSON.stringify(Object.keys(parsedJson)));
+        // Info('Parsed JSON structure: ' + JSON.stringify(Object.keys(parsedJson)));
 
         if (!parsedJson?.response?.records) {
-            return Error('No records found in response');
+            return 'No records found in response';
         }
 
         const records = parsedJson.response.records;
-        Info('Number of records found: ' + records.length);
+        // Info('Number of records found: ' + records.length);
 
         return records;
     } catch (error) {
