@@ -5,7 +5,8 @@ import { Sucess, Info, Warning, Alert, Error } from './ConsoleManagement.js'
 
 import { xml2json } from 'xml-js';
 import { parse } from 'path';
-import { SPRINGER_API_KEY } from './env.js';
+// import { SPRINGER_API_KEY } from './env.js';
+const SPRINGER_API_KEY = ''
 
 /**
  * Fetches search results from Springer API
